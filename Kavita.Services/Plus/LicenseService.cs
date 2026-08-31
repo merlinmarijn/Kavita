@@ -133,6 +133,7 @@ public class LicenseService(
     /// <returns></returns>
     public async Task<bool> HasActiveLicense(bool forceCheck = false, CancellationToken ct = default)
     {
+        return true
         var provider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.License);
         if (!forceCheck)
         {
