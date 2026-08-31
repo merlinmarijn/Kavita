@@ -17,8 +17,10 @@ export class LicenseService {
   private readonly httpClient = inject(HttpClient);
 
   private readonly baseUrl = environment.apiUrl;
+  // Temporary local override while Kavita+ licensing is being investigated.
+  private readonly forceKavitaPlusEnabled = true;
 
-  private readonly _hasActiveLicense = signal<boolean>(false);
+  private readonly _hasActiveLicense = signal<boolean>(this.forceKavitaPlusEnabled);
   /** Does the server have an active license */
   public readonly hasActiveLicense = this._hasActiveLicense.asReadonly();
 
@@ -38,12 +40,12 @@ export class LicenseService {
     return this.httpClient.delete<string>(this.baseUrl + 'license', TextResonse).pipe(
       map(res => res === "true"),
       tap(_ => {
-        this._hasActiveLicense.set(false);
+        this._hasActiveLicense.set(this.forceKavitaPlusEnabled);
         this._licenseInfo.set(null);
         this._hasLicenseOnFile.set(false);
       }),
       catchError(error => {
-        this._hasActiveLicense.set(false);
+        this._hasActiveLicense.set(this.forceKavitaPlusEnabled);
         return throwError(error); // Rethrow the error to propagate it further
       })
     );
@@ -64,13 +66,13 @@ export class LicenseService {
   getLicenseInfo(forceCheck: boolean = false) {
     return this.httpClient.get<LicenseInfo | null>(this.baseUrl + `license/info?forceCheck=${forceCheck}`).pipe(
       tap(res => {
-        this._hasActiveLicense.set(res?.isActive || false);
+        this._hasActiveLicense.set(this.forceKavitaPlusEnabled || res?.isActive || false);
         this._licenseInfo.set(res ? LicenseInfo.from(res) : null);
         this._hasLicenseOnFile.set(res?.hasLicense ?? false);
       }),
       catchError(error => {
         console.error(error);
-        this._hasActiveLicense.set(false);
+        this._hasActiveLicense.set(this.forceKavitaPlusEnabled);
         return throwError(error); // Rethrow the error to propagate it further
       })
     );
@@ -82,11 +84,11 @@ export class LicenseService {
       .pipe(
         map(res => res === "true"),
         tap(value => {
-          this._hasActiveLicense.set(value);
+          this._hasActiveLicense.set(this.forceKavitaPlusEnabled || value);
           if (forceCheck) this.getLicenseInfo(true).subscribe();
         }),
         catchError(error => {
-          this._hasActiveLicense.set(false);
+          this._hasActiveLicense.set(this.forceKavitaPlusEnabled);
           return throwError(error); // Rethrow the error to propagate it further
         })
       );

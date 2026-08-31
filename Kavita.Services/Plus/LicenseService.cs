@@ -38,6 +38,8 @@ public class LicenseService(
     IEventHub eventHub)
     : ILicenseService
 {
+    // Temporary local override while Kavita+ licensing is being investigated.
+    private static readonly bool ForceKavitaPlusEnabled = true;
     private readonly TimeSpan _licenseCacheTimeout = TimeSpan.FromHours(8);
     /// <summary>
     /// Cache key for if license is valid or not
@@ -133,7 +135,8 @@ public class LicenseService(
     /// <returns></returns>
     public async Task<bool> HasActiveLicense(bool forceCheck = false, CancellationToken ct = default)
     {
-        return true;
+        if (ForceKavitaPlusEnabled) return true;
+
         var provider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.License);
         if (!forceCheck)
         {
